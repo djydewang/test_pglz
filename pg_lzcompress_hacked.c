@@ -510,3 +510,39 @@ pglz_decompress_hacked32(const char *source, int32 slen, char *dest,
 	 */
 	return (char*)dp - dest;
 }
+
+int32
+pglz_decompress_hacked_seg(const char *source, int32 slen, char *dest,
+					   int32 rawsize, bool check_complete)
+{
+	const unsigned char *sp;
+	const unsigned char *srcend;
+	unsigned char *dp;
+	unsigned char *destend;
+
+	sp = (const unsigned char *) source;
+	srcend = ((const unsigned char *) source) + slen;
+	dp = (unsigned char *) dest;
+	destend = dp + rawsize;
+
+	while (sp < srcend && dp < destend)
+	{
+		int seg_offset = *((int32*)(sp));
+		int seg_len = *((int16*)(sp + sizeof(int32)));
+		int len = pglz_decompress_hacked(sp + 6, seg_len - 6, dp, rawsize, false);
+		/* TODO verify the length of the segment using adjacent offsets*/
+		sp += seg_len;
+		dp += len;
+	}
+
+	/*
+	 * Check we decompressed the right amount.
+	 * If we are slicing, then we won't necessarily
+	 * be at the end of the source or dest buffers
+	 * when we hit a stop, so we don't test them.
+	 */
+	if (check_complete && (dp != destend || sp != srcend))
+		return -1;
+
+	return (char*)dp - dest;
+}

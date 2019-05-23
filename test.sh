@@ -5,7 +5,7 @@ pkill -9 postgres || true
 make install
 
 DB=~/DemoDb1
-BINDIR=~/project/bin
+BINDIR=~/db_install/postgres/bin
 
 rm -rf $DB
 cp *.sql $BINDIR
